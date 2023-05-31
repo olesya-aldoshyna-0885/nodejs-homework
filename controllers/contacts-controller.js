@@ -1,5 +1,5 @@
-const contactsService = require('../models/contacts');
-const { ctrlWrapper } = require('../decorators');
+const contactsService = require("../models/contacts");
+const { ctrlWrapper } = require("../decorators");
 
 const listContacts = async (req, res) => {
   const result = await contactsService.listContacts();
