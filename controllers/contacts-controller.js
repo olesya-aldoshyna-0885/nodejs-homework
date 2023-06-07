@@ -1,14 +1,15 @@
-const contactsService = require("../models/contacts");
+// const contactsService = require("../models/contacts");
 const { ctrlWrapper } = require("../decorators");
+const {contactWithSchema} = require("../schemas/contacts-schemas");
 
 const listContacts = async (req, res) => {
-  const result = await contactsService.listContacts();
+  const result = await contactWithSchema.find();
   res.json(result);
 }
 
 const getContactById = async (req, res) => {
   const { contactId } = req.params;
-  const result = await contactsService.getContactById(contactId);
+  const result = await contactWithSchema.findOne(contactId);
   if (!result) {
     return res.status(404).json({
       message: `Client with ID: ${contactId} not found`
@@ -18,7 +19,7 @@ const getContactById = async (req, res) => {
 }
 
 const addContact = async (req, res) => {
-  const result = await contactsService.addContact(req.body);
+  const result = await contactWithSchema.create(req.body);
   if (!result) {
     return res.status(400).json({
       message: `Missing required name field`
@@ -29,7 +30,7 @@ const addContact = async (req, res) => {
 
 const removeContact = async (req, res) => {
   const { contactId } = req.params;
-  const result = await contactsService.removeContact(contactId);
+  const result = await contactWithSchema.findByIdAndDelete(contactId);
   if (!result) {
     return res.status(404).json({
       message: `Client with ID: ${contactId} not found`
@@ -42,7 +43,7 @@ const removeContact = async (req, res) => {
 
 const updateContact = async (req, res) => {
   const { contactId } = req.params;
-  const result = await contactsService.updateContact(contactId, req.body);
+  const result = await contactWithSchema.findByIdAndUpdate(contactId, req.body, { new: true });
   if (!result) {
     return res.status(400).json({
       message: `Missing fields`
