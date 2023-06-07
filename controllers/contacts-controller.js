@@ -1,15 +1,15 @@
 // const contactsService = require("../models/contacts");
 const { ctrlWrapper } = require("../decorators");
-const {contactWithSchema} = require("../schemas/contacts-schemas");
+const { contactWithSchema } = require("../schemas/contacts-schemas");
 
 const listContacts = async (req, res) => {
-  const result = await contactWithSchema.find();
+  const result = await contactWithSchema.find({}, "-createdAt -updatedAt");
   res.json(result);
 }
 
 const getContactById = async (req, res) => {
   const { contactId } = req.params;
-  const result = await contactWithSchema.findOne(contactId);
+  const result = await contactWithSchema.findById(contactId);
   if (!result) {
     return res.status(404).json({
       message: `Client with ID: ${contactId} not found`
@@ -46,7 +46,20 @@ const updateContact = async (req, res) => {
   const result = await contactWithSchema.findByIdAndUpdate(contactId, req.body, { new: true });
   if (!result) {
     return res.status(400).json({
-      message: `Missing fields`
+      message: "Not found"
+    });
+  }
+  res.json(result);
+};
+
+const updateFavorite = async (req, res) => {
+  const { contactId } = req.params;
+  const result = await contactWithSchema.findByIdAndUpdate(contactId, req.body, {
+    new: true,
+  });
+  if (!result) {
+    return res.status(404).json({
+      message: "Not found",
     });
   }
   res.json(result);
@@ -58,4 +71,5 @@ module.exports = {
   addContact: ctrlWrapper(addContact),
   removeContact: ctrlWrapper(removeContact),
   updateContact: ctrlWrapper(updateContact),
+  updateFavorite: ctrlWrapper(updateFavorite),
 }
