@@ -1,8 +1,10 @@
 const express = require("express");
 const ctrl = require("../../controllers/contacts-controller");
 const { schemas } = require("../../schemas/contacts-schemas");
-const { isValidId, validateBody } = require("../../decorators");
+const { isValidId, validateBody, authenticate } = require("../../decorators");
 const router = express.Router();
+
+router.use(authenticate);
 
 router.get("/", ctrl.listContacts);
 
