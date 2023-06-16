@@ -14,7 +14,7 @@ async function register (req, res, next) {
     try {
         const currentUser = await User.findOne({ email: newUser.email });
         if (currentUser !== null) {
-            return res.status(409).json({ message: "User already exists" });
+            return res.status(409).json({ message: "Email in use" });
         }
         
         newUser.password = await bcrypt.hash(newUser.password, 10);
@@ -31,12 +31,12 @@ async function login(req, res, next) {
     try {
         const user = await User.findOne({ email });   
         if (user === null) {
-            return res.status(401).json({ error: "Email or password is incorrect" });
+            return res.status(401).json({ error: "Email or password is wrong" });
         }
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (isMatch === false) { 
-            return res.status(401).json({ error: "Email or password is incorrect" });
+            return res.status(401).json({ error: "Email or password is wrong" });
         }
 
         const { _id: id } = user;
@@ -54,19 +54,19 @@ async function login(req, res, next) {
 }
 
 async function getCurrent(req, res) { 
-    const { email, name } = req.user;
+    const { email, subscription } = req.user;
     res.json({
         email,
-        name,
+        subscription,
     })
 }
 
 async function logout(req, res) { 
     const { _id } = req.user;
     await User.findByIdAndUpdate(_id, { token: "" });
-
-    res.json({
-        message: "Logout success"
+    
+    res.status(204).json({
+        message: "No Content"
     });
 }
 

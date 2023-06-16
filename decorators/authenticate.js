@@ -9,7 +9,7 @@ const authenticate = async (req, res, next) => {
 
     if (bearer !== "Bearer") {
         return res.status(401).json({
-            message: "Unauthorized"
+            message: "Not authorized"
         });
     }
     
@@ -18,7 +18,7 @@ const authenticate = async (req, res, next) => {
         const user = await User.findById(id);
         if (!user || !user.token) {
             return res.status(401).json({
-                message: "Unauthorized"
+                message: "Not authorized"
             });
         }
         req.user = user;
@@ -26,7 +26,7 @@ const authenticate = async (req, res, next) => {
     }
     catch {
         return res.status(401).json({
-            message: "Unauthorized"
+            message: "Not authorized"
         });
     };
 };
