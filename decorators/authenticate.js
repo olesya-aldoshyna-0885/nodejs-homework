@@ -8,10 +8,9 @@ const authenticate = async (req, res, next) => {
     const [bearer, token] = authorization.split(" ");
 
     if (bearer !== "Bearer") {
-        return res.status(401).json({
-            message: "Not authorized"
-        });
-    }
+        return next(res.status(401).json({
+            message: "Not authorized"})
+    )}
     
     try {
         const { id } = jwt.verify(token, SECRET_KEY);
@@ -19,15 +18,16 @@ const authenticate = async (req, res, next) => {
         if (!user || !user.token) {
             return res.status(401).json({
                 message: "Not authorized"
-            });
-        }
+            })
+       }
         req.user = user;
         next();
-    }
+    } 
     catch {
-        return res.status(401).json({
+        return next(res.status(401).json({
             message: "Not authorized"
-        });
+        })
+        )
     };
 };
 

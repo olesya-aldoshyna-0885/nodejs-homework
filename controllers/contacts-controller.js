@@ -28,7 +28,7 @@ const getContactById = async (req, res) => {
 
 const addContact = async (req, res) => {
   const { _id: owner } = req.user;
-  const result = await contactWithSchema.create(...req.body, owner);
+  const result = await contactWithSchema.create({...req.body, owner});
   if (!result) {
     return res.status(400).json({
       message: `Missing required name field`

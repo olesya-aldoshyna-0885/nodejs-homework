@@ -1,5 +1,6 @@
 const Joi = require("joi");
 const { model, Schema } = require("mongoose");
+const { handleMongooseError } = require('../decorators/handleMongooseError');
 
 const contactAddSchema = Joi.object({
     name: Joi.string().required().messages({
@@ -30,11 +31,17 @@ const schemaContact = new Schema({
         type: Boolean,
         default: false,
     },
+    owner: {
+      type: Schema.Types.ObjectId,
+      ref: 'user',
+    }
 },
     {
         timestamps: true,
         versionKey: false,
     });
+
+schemaContact.post("save", handleMongooseError);
 
 const updateFavoriteSchema = Joi.object({
   favorite: Joi.boolean().required(),
