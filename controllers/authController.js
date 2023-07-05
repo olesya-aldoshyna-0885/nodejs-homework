@@ -6,6 +6,7 @@ const { User } = require('../models/users')
 const { SECRET_KEY } = process.env;
 const { ctrlWrapper } = require("../decorators");
 const gravatar = require('gravatar');
+const Jimp = require("jimp");
 
 const avatarsDir = path.join(__dirname, '../', 'public', 'avatars');
 
@@ -66,11 +67,17 @@ const logout = async (req, res) => {
     });
 }
 
+const resizeAvatar = async (url, filename) => {    
+  const image = await Jimp.read(url);
+  await image.resize(250, 250).writeAsync(url);
+};
+
 const updateAvatar = async (req, res) => { 
     const {_id} = req.user;
     const { path: tempUpload, originalname } = req.file;
     const filename = `${_id}_${originalname}`;
     const resultUpload = path.join(avatarsDir, filename);
+    await resizeAvatar(tempUpload);
     await fs.rename(tempUpload, resultUpload);
     const avatarUrl = path.join('avatars', filename);
     await User.findByIdAndUpdate(_id, { avatarUrl });
