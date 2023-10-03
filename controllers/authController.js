@@ -1,59 +1,56 @@
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { User } = require('../models/user')
+const path = require("path");
+const fs = require("fs/promises");
+const { User } = require('../models/users')
 const { SECRET_KEY } = process.env;
 const { ctrlWrapper } = require("../decorators");
+const gravatar = require('gravatar');
+const Jimp = require("jimp");
 
-async function register (req, res, next) {
- const newUser = {
-        name: req.body.name,
-        email: req.body.email,
-        password: req.body.password
-    }
+const avatarsDir = path.join(__dirname, '../', 'public', 'avatars');
 
-    try {
-        const currentUser = await User.findOne({ email: newUser.email });
-        if (currentUser !== null) {
-            return res.status(409).json({ message: "Email in use" });
-        }
-        
-        newUser.password = await bcrypt.hash(newUser.password, 10);
-        
-        await User.create(newUser);
-        return res.status(201).end();
-    } catch (error) {
-        return next(error);
-    }
-}
-
-async function login(req, res, next) { 
+const register = async (req, res, next) => {
     const { email, password } = req.body;
-    try {
-        const user = await User.findOne({ email });   
-        if (user === null) {
-            return res.status(401).json({ error: "Email or password is wrong" });
+    const currentUser = await User.findOne({ email });
+        if (currentUser != null) {
+            return res.status(409).json({ message: "Email already in use" });
         }
-
-        const isMatch = await bcrypt.compare(password, user.password);
-        if (isMatch === false) { 
-            return res.status(401).json({ error: "Email or password is wrong" });
-        }
-
-        const { _id: id } = user;
-        const payload = {
-            id,
-        }
-        const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "23h"});
-        await User.findByIdAndUpdate(id, { token });
-
-        res.json({ token });
-
-    } catch (error) {
-        return next(error);
-    }
+    const hashPassword = await bcrypt.hash(password, 10);
+    const avatarURL = gravatar.url(email);
+        
+    const newUser = await User.create({...req.body, password: hashPassword, avatarURL});
+    
+    return res.status(201).json({
+        email: newUser.email,
+        name: newUser.name,
+        });
 }
 
-async function getCurrent(req, res) { 
+const login = async (req, res) => { 
+    const { email, password } = req.body;
+   
+    const user = await User.findOne({ email });   
+    if (!user) {
+        return res.status(401).json({ error: "Email or password is wrong" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (isMatch === false) { 
+        return res.status(401).json({ error: "Email or password is wrong" });
+    }
+
+    const { _id: id } = user;
+    const payload = {
+        id,
+    }
+    const token = jwt.sign(payload, SECRET_KEY, { expiresIn: "23h"});
+    await User.findByIdAndUpdate(id, { token });
+
+    res.json({ token });
+}
+
+const getCurrent = async (req, res) => { 
     const { email, subscription } = req.user;
     res.json({
         email,
@@ -61,7 +58,7 @@ async function getCurrent(req, res) {
     })
 }
 
-async function logout(req, res) { 
+const logout = async (req, res) => { 
     const { _id } = req.user;
     await User.findByIdAndUpdate(_id, { token: "" });
     
@@ -70,9 +67,30 @@ async function logout(req, res) {
     });
 }
 
+const resizeAvatar = async (url, filename) => {    
+  const image = await Jimp.read(url);
+  await image.resize(250, 250).writeAsync(url);
+};
+
+const updateAvatar = async (req, res) => { 
+    const {_id} = req.user;
+    const { path: tempUpload, originalname } = req.file;
+    const filename = `${_id}_${originalname}`;
+    const resultUpload = path.join(avatarsDir, filename);
+    await resizeAvatar(tempUpload);
+    await fs.rename(tempUpload, resultUpload);
+    const avatarUrl = path.join('avatars', filename);
+    await User.findByIdAndUpdate(_id, { avatarUrl });
+
+    res.json({
+        avatarUrl
+    })
+};
+
 module.exports = {
     register: ctrlWrapper(register),
     login: ctrlWrapper(login),
     getCurrent: ctrlWrapper(getCurrent),
     logout: ctrlWrapper(logout),
+    updateAvatar: ctrlWrapper(updateAvatar)
 };

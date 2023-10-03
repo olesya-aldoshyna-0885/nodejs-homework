@@ -1,13 +1,13 @@
 const express = require('express');
-const AuthController = require('../../controllers/authController');
-const { authenticate } = require('../../decorators/authenticate');
-const { schemas } = require('../../models/user');
-const { validateBody } = require('../../decorators');
+const authController = require('../../controllers/authController');
+const { authenticate, validateBody, upload } = require('../../decorators');
+const { schemas } = require('../..//schemas/users-schemas');
 const router = express.Router();
   
-router.post('/register', validateBody(schemas.userRegisterSchema), AuthController.register);
-router.post('/login',  validateBody(schemas.userLoginSchema), AuthController.login);
-router.get('/current', authenticate, AuthController.getCurrent);
-router.post('/logout', authenticate, AuthController.logout);
+router.post('/register', validateBody(schemas.userRegisterSchema), authController.register);
+router.post('/login',  validateBody(schemas.userLoginSchema), authController.login);
+router.get('/current', authenticate, authController.getCurrent);
+router.post('/logout', authenticate, authController.logout);
+router.patch('/avatars', authenticate, upload.single('avatar'), authController.updateAvatar);
 
 module.exports = router;
